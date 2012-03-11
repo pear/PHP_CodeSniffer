@@ -794,8 +794,12 @@ class PHP_CodeSniffer
                     throw new PHP_CodeSniffer_Exception($error);
                 }
 
-                $path = $parts[0].'/Sniffs/'.$parts[1].'/'.$parts[2].'Sniff.php';
-                $path = realpath(dirname(__FILE__).'/CodeSniffer/Standards/'.$path);
+                if (basename($this->standardDir) === $parts[0]) {
+                    $path = realpath($this->standardDir.'/Sniffs/'.$parts[1].'/'.$parts[2].'Sniff.php');
+                } else {
+                    $path = $parts[0].'/Sniffs/'.$parts[1].'/'.$parts[2].'Sniff.php';
+                    $path = realpath(dirname(__FILE__).'/CodeSniffer/Standards/'.$path);
+                }
             }
         }//end if
 
