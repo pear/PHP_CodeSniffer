@@ -2,79 +2,59 @@
 /**
  * A test class for running all PHP_CodeSniffer unit tests.
  *
- * PHP version 5
- *
- * @category  PHP
- * @package   PHP_CodeSniffer
  * @author    Greg Sherwood <gsherwood@squiz.net>
- * @author    Marc McIntyre <mmcintyre@squiz.net>
- * @copyright 2006-2011 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   http://matrix.squiz.net/developer/tools/php_cs/licence BSD Licence
- * @link      http://pear.php.net/package/PHP_CodeSniffer
+ * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
+ * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
-require_once 'TestSuite.php';
-require_once 'PHPUnit/TextUI/TestRunner.php';
+namespace PHP_CodeSniffer\Tests;
 
-if (is_file(dirname(__FILE__).'/../CodeSniffer.php') === true) {
-    // We are not installed.
+if ($GLOBALS['PHP_CODESNIFFER_PEAR'] === false) {
     include_once 'Core/AllTests.php';
     include_once 'Standards/AllSniffs.php';
-    include_once dirname(__FILE__).'/../CodeSniffer.php';
 } else {
     include_once 'CodeSniffer/Core/AllTests.php';
     include_once 'CodeSniffer/Standards/AllSniffs.php';
-    include_once 'PHP/CodeSniffer.php';
+    include_once 'FileList.php';
 }
 
-/**
- * A test class for running all PHP_CodeSniffer unit tests.
- *
- * Usage: phpunit AllTests.php
- *
- * @category  PHP
- * @package   PHP_CodeSniffer
- * @author    Greg Sherwood <gsherwood@squiz.net>
- * @author    Marc McIntyre <mmcintyre@squiz.net>
- * @copyright 2006-2011 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   http://matrix.squiz.net/developer/tools/php_cs/licence BSD Licence
- * @version   Release: @package_version@
- * @link      http://pear.php.net/package/PHP_CodeSniffer
- */
+// PHPUnit 7 made the TestSuite run() method incompatible with
+// older PHPUnit versions due to return type hints, so maintain
+// two different suite objects.
+$phpunit7 = false;
+if (class_exists('\PHPUnit\Runner\Version') === true) {
+    $version = \PHPUnit\Runner\Version::id();
+    if ($version[0] === '7') {
+        $phpunit7 = true;
+    }
+}
+
+if ($phpunit7 === true) {
+    include_once 'TestSuite7.php';
+} else {
+    include_once 'TestSuite.php';
+}
+
 class PHP_CodeSniffer_AllTests
 {
 
 
     /**
-     * Prepare the test runner.
-     *
-     * @return void
-     */
-    public static function main()
-    {
-        PHPUnit_TextUI_TestRunner::run(self::suite());
-
-    }//end main()
-
-
-    /**
      * Add all PHP_CodeSniffer test suites into a single test suite.
      *
-     * @return PHPUnit_Framework_TestSuite
+     * @return \PHPUnit\Framework\TestSuite
      */
     public static function suite()
     {
+        $GLOBALS['PHP_CODESNIFFER_STANDARD_DIRS'] = [];
+        $GLOBALS['PHP_CODESNIFFER_TEST_DIRS']     = [];
+
         // Use a special PHP_CodeSniffer test suite so that we can
         // unset our autoload function after the run.
-        $suite = new PHP_CodeSniffer_TestSuite('PHP CodeSniffer');
+        $suite = new TestSuite('PHP CodeSniffer');
 
-        $suite->addTest(PHP_CodeSniffer_Core_AllTests::suite());
-        $suite->addTest(PHP_CodeSniffer_Standards_AllSniffs::suite());
-
-        // Unregister this here because the PEAR tester loads
-        // all package suites before running then, so our autoloader
-        // will cause problems for the packages included after us.
-        spl_autoload_unregister(array('PHP_CodeSniffer', 'autoload'));
+        $suite->addTest(Core\AllTests::suite());
+        $suite->addTest(Standards\AllSniffs::suite());
 
         return $suite;
 
@@ -82,5 +62,3 @@ class PHP_CodeSniffer_AllTests
 
 
 }//end class
-
-?>
